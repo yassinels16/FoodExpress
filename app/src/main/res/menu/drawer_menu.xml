@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_home"
+            android:icon="@drawable/ic_home"
+            android:title="Home" />
+        <item
+            android:id="@+id/nav_categories"
+            android:icon="@drawable/ic_category"
+            android:title="Categories" />
+        <item
+            android:id="@+id/nav_cart"
+            android:icon="@drawable/ic_cart"
+            android:title="Cart" />
+        <item
+            android:id="@+id/nav_orders"
+            android:icon="@drawable/ic_order"
+            android:title="My Orders" />
+    </group>
+
+    <item android:title="Tools">
+        <menu>
+            <item
+                android:id="@+id/nav_map"
+                android:icon="@drawable/ic_map"
+                android:title="Map" />
+            <item
+                android:id="@+id/nav_qr_scanner"
+                android:icon="@drawable/ic_qr_code"
+                android:title="QR Scanner" />
+            <item
+                android:id="@+id/nav_bluetooth"
+                android:icon="@drawable/ic_bluetooth"
+                android:title="Bluetooth" />
+        </menu>
+    </item>
+</menu>
