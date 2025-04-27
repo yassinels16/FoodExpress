@@ -85,6 +85,14 @@
                     android:textSize="18sp" />
 
                 <Button
+                    android:id="@+id/buttonToggleFavorite"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="16dp"
+                    android:text="Add to Favorites" />
+
+                <Button
                     android:id="@+id/buttonAddToCart"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"

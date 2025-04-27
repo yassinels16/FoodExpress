@@ -35,6 +35,11 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
     private LocationManager locationManager;
     private Button buttonSetLocation;
     private GeoPoint currentLocation;
+    private Marker startMarker;
+
+    // Initial coordinates for Tunis
+    private static final double INITIAL_LATITUDE = 33.8818;
+    private static final double INITIAL_LONGITUDE = 10.0982;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +48,7 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         // Initialize OSMDroid configuration
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+        Configuration.getInstance().setUserAgentValue(getPackageName());
 
         setContentView(R.layout.activity_map);
 
@@ -60,6 +66,40 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         // Initialize map controller
         mapController = map.getController();
         mapController.setZoom(15.0);
+
+        // Set initial location to Tunis
+        currentLocation = new GeoPoint(INITIAL_LATITUDE, INITIAL_LONGITUDE);
+        mapController.setCenter(currentLocation);
+
+        // Add marker at initial position
+        startMarker = new Marker(map);
+        startMarker.setPosition(currentLocation);
+        startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        startMarker.setTitle("Tunis - Position initiale");
+        map.getOverlays().add(startMarker);
+
+        // Make marker draggable
+        startMarker.setDraggable(true);
+        startMarker.setOnMarkerDragListener(new Marker.OnMarkerDragListener() {
+            @Override
+            public void onMarkerDrag(Marker marker) {
+                // Do nothing while dragging
+            }
+
+            @Override
+            public void onMarkerDragEnd(Marker marker) {
+                GeoPoint newPosition = marker.getPosition();
+                currentLocation = newPosition;
+                Toast.makeText(MapActivity.this,
+                        "Nouveau point : " + newPosition.getLatitude() + ", " + newPosition.getLongitude(),
+                        Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onMarkerDragStart(Marker marker) {
+                // Do nothing when drag starts
+            }
+        });
 
         // Initialize location overlay
         locationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), map);
@@ -117,18 +157,18 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
 
     @Override
     public void onLocationChanged(Location location) {
-        currentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
-        mapController.setCenter(currentLocation);
+        // Only update if we don't have a location yet
+        if (currentLocation == null ||
+                (currentLocation.getLatitude() == INITIAL_LATITUDE &&
+                        currentLocation.getLongitude() == INITIAL_LONGITUDE)) {
 
-        // Add marker at current location
-        map.getOverlays().clear();
-        map.getOverlays().add(locationOverlay);
-        
-        Marker marker = new Marker(map);
-        marker.setPosition(currentLocation);
-        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        marker.setTitle("Your Location");
-        map.getOverlays().add(marker);
+            currentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
+            mapController.setCenter(currentLocation);
+
+            // Update marker position
+            startMarker.setPosition(currentLocation);
+            map.invalidate();
+        }
     }
 
     @Override

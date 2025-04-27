@@ -54,8 +54,31 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // ORDER_ITEMS table columns
     private static final String KEY_ORDER_ID = "order_id";
 
+    // Method to ensure the favorite column exists in the products table
+    private void ensureFavoriteColumnExists() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = null;
+        try {
+            // Check if the column exists
+            cursor = db.rawQuery("SELECT * FROM " + TABLE_PRODUCTS + " LIMIT 0", null);
+            int columnIndex = cursor.getColumnIndex("favorite");
+
+            if (columnIndex == -1) {
+                // Column doesn't exist, add it
+                db.execSQL("ALTER TABLE " + TABLE_PRODUCTS + " ADD COLUMN favorite INTEGER DEFAULT 0");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        ensureFavoriteColumnExists();
     }
 
     @Override
@@ -75,7 +98,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + KEY_CATEGORY_ID + " INTEGER,"
                 + KEY_PRICE + " REAL,"
                 + KEY_DETAILS + " TEXT,"
-                + KEY_IMAGE + " TEXT" + ")";
+                + KEY_IMAGE + " TEXT,"
+                + "favorite INTEGER DEFAULT 0" + ")";
         db.execSQL(CREATE_PRODUCTS_TABLE);
 
         // Create CART table
@@ -122,35 +146,35 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Initialize database with sample data
     public void initializeData() {
         SQLiteDatabase db = this.getWritableDatabase();
-        
+
         // Check if categories already exist
         Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_CATEGORIES, null);
         cursor.moveToFirst();
         int count = cursor.getInt(0);
         cursor.close();
-        
+
         if (count > 0) {
             return; // Data already initialized
         }
-        
+
         // Add sample categories
         addCategory(new Category(1, "Burgers", "Delicious burgers", "burger_category.jpg"));
         addCategory(new Category(2, "Pizzas", "Tasty pizzas", "pizza_category.jpg"));
         addCategory(new Category(3, "Sandwiches", "Fresh sandwiches", "sandwich_category.jpg"));
         addCategory(new Category(4, "Drinks", "Refreshing drinks", "drink_category.jpg"));
-        
+
         // Add sample products
         addProduct(new Product(1, "Classic Burger", 1, 5.99, "Beef patty with lettuce, tomato, and special sauce", "classic_burger.jpg"));
         addProduct(new Product(2, "Cheese Burger", 1, 6.99, "Classic burger with cheese", "cheese_burger.jpg"));
         addProduct(new Product(3, "Double Burger", 1, 8.99, "Double beef patty with all the fixings", "double_burger.jpg"));
-        
+
         addProduct(new Product(4, "Margherita Pizza", 2, 9.99, "Classic tomato and cheese pizza", "margherita_pizza.jpg"));
         addProduct(new Product(5, "Pepperoni Pizza", 2, 11.99, "Pizza with pepperoni toppings", "pepperoni_pizza.jpg"));
         addProduct(new Product(6, "Vegetarian Pizza", 2, 10.99, "Pizza with assorted vegetables", "vegetarian_pizza.jpg"));
-        
+
         addProduct(new Product(7, "Club Sandwich", 3, 7.99, "Triple-decker sandwich with chicken, bacon, and vegetables", "club_sandwich.jpg"));
         addProduct(new Product(8, "Tuna Sandwich", 3, 6.99, "Tuna with mayo and vegetables", "tuna_sandwich.jpg"));
-        
+
         addProduct(new Product(9, "Cola", 4, 1.99, "Refreshing cola drink", "cola.jpg"));
         addProduct(new Product(10, "Orange Juice", 4, 2.99, "Fresh orange juice", "orange_juice.jpg"));
     }
@@ -225,7 +249,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.query(TABLE_PRODUCTS, null, KEY_ID + "=?",
                 new String[]{String.valueOf(id)}, null, null, null);
-        
+
         Product product = null;
         if (cursor.moveToFirst()) {
             product = new Product();
@@ -235,6 +259,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             product.setPrice(cursor.getDouble(3));
             product.setDetails(cursor.getString(4));
             product.setImage(cursor.getString(5));
+
+            // Check if the favorite column exists before trying to access it
+            try {
+                int favoriteColumnIndex = cursor.getColumnIndex("favorite");
+                if (favoriteColumnIndex != -1) {
+                    product.setFavorite(cursor.getInt(favoriteColumnIndex) > 0);
+                } else {
+                    product.setFavorite(false);
+                }
+            } catch (Exception e) {
+                // If there's any error, default to not favorite
+                product.setFavorite(false);
+            }
         }
         cursor.close();
         return product;
@@ -262,17 +299,57 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return productList;
     }
 
+    // Add a method to mark/unmark a product as favorite
+    public void toggleFavorite(int productId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Product product = getProduct(productId);
+
+        if (product != null) {
+            ContentValues values = new ContentValues();
+            // Toggle the favorite status (assuming you add a 'favorite' column to the products table)
+            values.put("favorite", product.isFavorite() ? 0 : 1);
+
+            db.update(TABLE_PRODUCTS, values, KEY_ID + "=?", new String[]{String.valueOf(productId)});
+        }
+        db.close();
+    }
+
+    // Add a method to get all favorite products
+    public List<Product> getFavoriteProducts() {
+        List<Product> favoriteList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        // Query to get all products marked as favorite
+        Cursor cursor = db.query(TABLE_PRODUCTS, null, "favorite=?", new String[]{"1"}, null, null, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                Product product = new Product();
+                product.setId(cursor.getInt(0));
+                product.setName(cursor.getString(1));
+                product.setCategoryId(cursor.getInt(2));
+                product.setPrice(cursor.getDouble(3));
+                product.setDetails(cursor.getString(4));
+                product.setImage(cursor.getString(5));
+                product.setFavorite(true);
+                favoriteList.add(product);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return favoriteList;
+    }
+
     // CRUD operations for Cart
     public void addToCart(int productId, int quantity) {
         SQLiteDatabase db = this.getWritableDatabase();
-        
+
         // Check if product already exists in cart
         Cursor cursor = db.query(TABLE_CART, null, KEY_PRODUCT_ID + "=?",
                 new String[]{String.valueOf(productId)}, null, null, null);
-        
+
         ContentValues values = new ContentValues();
         values.put(KEY_PRODUCT_ID, productId);
-        
+
         if (cursor.moveToFirst()) {
             // Update quantity
             int currentQuantity = cursor.getInt(2);
@@ -311,14 +388,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public List<CartItem> getCartItems() {
         List<CartItem> cartItems = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
-        
+
         String query = "SELECT c." + KEY_ID + ", c." + KEY_PRODUCT_ID + ", c." + KEY_QUANTITY + ", " +
                 "p." + KEY_NAME + ", p." + KEY_PRICE + ", p." + KEY_IMAGE +
                 " FROM " + TABLE_CART + " c " +
                 "JOIN " + TABLE_PRODUCTS + " p ON c." + KEY_PRODUCT_ID + " = p." + KEY_ID;
-        
+
         Cursor cursor = db.rawQuery(query, null);
-        
+
         if (cursor.moveToFirst()) {
             do {
                 CartItem item = new CartItem();
@@ -338,13 +415,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public double getCartTotal() {
         double total = 0;
         SQLiteDatabase db = this.getReadableDatabase();
-        
+
         String query = "SELECT SUM(p." + KEY_PRICE + " * c." + KEY_QUANTITY + ") " +
                 "FROM " + TABLE_CART + " c " +
                 "JOIN " + TABLE_PRODUCTS + " p ON c." + KEY_PRODUCT_ID + " = p." + KEY_ID;
-        
+
         Cursor cursor = db.rawQuery(query, null);
-        
+
         if (cursor.moveToFirst()) {
             total = cursor.getDouble(0);
         }
@@ -362,9 +439,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(KEY_LATITUDE, order.getLatitude());
         values.put(KEY_LONGITUDE, order.getLongitude());
         values.put(KEY_ADDRESS, order.getAddress());
-        
+
         long orderId = db.insert(TABLE_ORDERS, null, values);
-        
+
         // Add order items
         List<CartItem> cartItems = getCartItems();
         for (CartItem item : cartItems) {
@@ -375,10 +452,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             itemValues.put(KEY_PRICE, item.getPrice());
             db.insert(TABLE_ORDER_ITEMS, null, itemValues);
         }
-        
+
         // Clear cart
         clearCart();
-        
+
         db.close();
         return orderId;
     }
@@ -387,7 +464,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         List<Order> orderList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.query(TABLE_ORDERS, null, null, null, null, null, KEY_DATE + " DESC");
-        
+
         if (cursor.moveToFirst()) {
             do {
                 Order order = new Order();

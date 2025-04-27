@@ -27,5 +27,7 @@
         <activity android:name=".QRScannerActivity"/>
         <activity android:name=".BluetoothActivity"/>
         <activity android:name=".SearchResultsActivity"/>
+        <activity android:name=".AddProductActivity"/>
+        <activity android:name=".FavoritesActivity"/>
     </application>
 </manifest>

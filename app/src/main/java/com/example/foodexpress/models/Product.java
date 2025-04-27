@@ -7,6 +7,7 @@ public class Product {
     private double price;
     private String details;
     private String image;
+    private boolean favorite;
 
     public Product() {
     }
@@ -66,5 +67,13 @@ public class Product {
 
     public void setImage(String image) {
         this.image = image;
+    }
+
+    public boolean isFavorite() {
+        return favorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        this.favorite = favorite;
     }
 }

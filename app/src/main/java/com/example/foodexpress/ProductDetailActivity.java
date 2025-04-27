@@ -25,6 +25,10 @@ public class ProductDetailActivity extends AppCompatActivity {
     private Button buttonIncreaseQuantity;
     private TextView textViewQuantity;
 
+    // Add a favorite button to the layout
+    private Button buttonToggleFavorite;
+    private boolean isFavorite = false;
+
     private DatabaseHelper databaseHelper;
     private Product product;
     private int quantity = 1;
@@ -65,6 +69,13 @@ public class ProductDetailActivity extends AppCompatActivity {
         buttonIncreaseQuantity = findViewById(R.id.buttonIncreaseQuantity);
         textViewQuantity = findViewById(R.id.textViewQuantity);
 
+        // In the onCreate method, after initializing other views:
+        buttonToggleFavorite = findViewById(R.id.buttonToggleFavorite);
+
+        // Get favorite status from database
+        isFavorite = product.isFavorite();
+        updateFavoriteButtonText();
+
         // Set product details
         textViewProductName.setText(product.getName());
         textViewProductPrice.setText(String.format("$%.2f", product.getPrice()));
@@ -92,10 +103,36 @@ public class ProductDetailActivity extends AppCompatActivity {
             Toast.makeText(this, "Added to cart", Toast.LENGTH_SHORT).show();
             finish();
         });
+
+        // Setup favorite button
+        buttonToggleFavorite.setOnClickListener(v -> {
+            // Toggle favorite status
+            isFavorite = !isFavorite;
+            product.setFavorite(isFavorite);
+
+            // Update in database
+            databaseHelper.toggleFavorite(product.getId());
+
+            // Update button text
+            updateFavoriteButtonText();
+
+            // Show message
+            String message = isFavorite ? "Added to favorites" : "Removed from favorites";
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void updateQuantityDisplay() {
         textViewQuantity.setText(String.valueOf(quantity));
+    }
+
+    // Add this method to update the favorite button text
+    private void updateFavoriteButtonText() {
+        if (isFavorite) {
+            buttonToggleFavorite.setText("Remove from Favorites");
+        } else {
+            buttonToggleFavorite.setText("Add to Favorites");
+        }
     }
 
     @Override
