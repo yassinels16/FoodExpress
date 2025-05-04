@@ -78,7 +78,7 @@ public class ProductDetailActivity extends AppCompatActivity {
 
         // Set product details
         textViewProductName.setText(product.getName());
-        textViewProductPrice.setText(String.format("$%.2f", product.getPrice()));
+        textViewProductPrice.setText(String.format("%.2fTND", product.getPrice()));
         textViewProductDetails.setText(product.getDetails());
         ImageUtils.loadImage(this, product.getImage(), imageViewProduct);
 

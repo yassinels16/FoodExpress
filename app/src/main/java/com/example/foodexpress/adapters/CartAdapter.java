@@ -48,9 +48,9 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
         CartItem item = cartItems.get(position);
         
         holder.textViewProductName.setText(item.getProductName());
-        holder.textViewPrice.setText(String.format("$%.2f", item.getPrice()));
+        holder.textViewPrice.setText(String.format("%.2fTND", item.getPrice()));
         holder.textViewQuantity.setText(String.valueOf(item.getQuantity()));
-        holder.textViewSubtotal.setText(String.format("$%.2f", item.getSubtotal()));
+        holder.textViewSubtotal.setText(String.format("%.2fTND", item.getSubtotal()));
         
         ImageUtils.loadImage(context, item.getImage(), holder.imageViewProduct);
         

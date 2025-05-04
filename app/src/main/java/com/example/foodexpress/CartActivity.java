@@ -72,7 +72,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartI
 
     private void updateUI() {
         double total = databaseHelper.getCartTotal();
-        textViewTotal.setText(String.format("Total: $%.2f", total));
+        textViewTotal.setText(String.format("Total: %.2fTND", total));
 
         if (cartItems.isEmpty()) {
             recyclerView.setVisibility(View.GONE);

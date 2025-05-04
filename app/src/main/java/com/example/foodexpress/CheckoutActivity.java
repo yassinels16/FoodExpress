@@ -38,7 +38,7 @@ public class CheckoutActivity extends AppCompatActivity {
     private static final int SMS_PERMISSION_REQUEST_CODE = 102;
     private static final int CALL_PERMISSION_REQUEST_CODE = 103;
     
-    private static final String RESTAURANT_PHONE = "1234567890"; // Example phone number
+    private static final String RESTAURANT_PHONE = "54009146"; // Example phone number
 
     private TextView textViewSubtotal;
     private TextView textViewDiscount;
@@ -119,10 +119,10 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
     private void updateTotals() {
-        textViewSubtotal.setText(String.format("$%.2f", subtotal));
-        textViewDiscount.setText(String.format("-$%.2f", discount));
+        textViewSubtotal.setText(String.format("%.2fTND", subtotal));
+        textViewDiscount.setText(String.format("-%.2fTND", discount));
         total = subtotal - discount;
-        textViewTotal.setText(String.format("$%.2f", total));
+        textViewTotal.setText(String.format("%.2TND", total));
     }
 
     private void applyDiscount(String code) {
@@ -134,8 +134,8 @@ public class CheckoutActivity extends AppCompatActivity {
             discount = subtotal * 0.1; // 10% discount
             Toast.makeText(this, "10% discount applied!", Toast.LENGTH_SHORT).show();
         } else if (code.equals("FREESHIP")) {
-            discount = 5; // $5 off for free shipping
-            Toast.makeText(this, "$5 shipping discount applied!", Toast.LENGTH_SHORT).show();
+            discount = 5; // 5TND off for free shipping
+            Toast.makeText(this, "5TND shipping discount applied!", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, "Invalid discount code", Toast.LENGTH_SHORT).show();
             return;
@@ -185,7 +185,7 @@ public class CheckoutActivity extends AppCompatActivity {
         }
         
         // Create SMS message
-        String message = "New order #" + orderId + " for $" + String.format("%.2f", total) + 
+        String message = "New order #" + orderId + " for TND" + String.format("%.2f", total) +
                 ". Delivery to: " + address + 
                 ". Notes: " + editTextNotes.getText().toString();
         
